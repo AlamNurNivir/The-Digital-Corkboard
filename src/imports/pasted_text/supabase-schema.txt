@@ -1,0 +1,107 @@
+Role: You are a Lead Full-Stack Architect and Creative UI/UX Designer specializing in React, Next.js (App Router), Tailwind CSS, Framer Motion, and Supabase.
+
+Objective: Build a feature-complete, responsive web application called "LearnTrack" where a group of friends can log daily learning sessions, view a shared activity wall, track statistics, and compare progress on a meme-infused leaderboard. 
+
+----------------------------------------------------------------------
+1. DESIGN SYSTEM & VISUAL AESTHETIC: "MINIMALIST ARTISTIC MEME x STICKY NOTE"
+----------------------------------------------------------------------
+The UI must feel like a clean, modern digital corkboard filled with colorful sticky notes, subtle hand-drawn touches, neubrutalist card borders, and playful internet meme culture integrations.
+
+A. Sticky Note Visual Specs:
+- Components (Cards, Modals, Forms) must look like physical sticky notes pinned to a wall.
+- Slight Random Rotations: Cards should have slight rotational offsets (e.g., `-rotate-1`, `rotate-1`, `-rotate-2`, `rotate-2`) that straighten smoothly on hover (`hover:rotate-0 transition-transform duration-300`).
+- Sticky Color Palette:
+  * Classic Canary Yellow: `bg-yellow-100 border-yellow-400 text-yellow-950`
+  * Pastel Mint Green: `bg-emerald-100 border-emerald-400 text-emerald-950`
+  * Lavender Soft Purple: `bg-purple-100 border-purple-400 text-purple-950`
+  * Soft Bubblegum Pink: `bg-pink-100 border-pink-400 text-pink-950`
+  * Electric Cyan / Sky Blue: `bg-sky-100 border-sky-400 text-sky-950`
+- Border & Shadows: Crisp, high-contrast neubrutalist edges (`border-2 border-slate-900`) combined with hard offset shadows (`shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]` or `shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`).
+- Pin Details: Each major card should feature a visual "push pin" or "tape strip" SVG graphic at the top-center (e.g., a small red dot push-pin or a semi-transparent rotated tape header).
+
+B. Minimalist Artistic & Meme Typography / Micro-Copy:
+- Typography: Clean sans-serif for main readability (e.g., Inter/Space Grotesk) paired with a handwritten/monospace secondary font for annotations, sticky headers, and timestamps (e.g., Caveat, Gaegu, or Courier Prime).
+- Meme Culture Integration & Micro-Copy Tone:
+  * Dynamic Rank Badges based on study streaks:
+    - 0 Days: "NPC / Smooth Brain Era 🧠"
+    - 1-3 Days: "Locked In 🔒"
+    - 4-7 Days: "Main Character Energy ⚡"
+    - 8-14 Days: "Gigachad Scholar 🗿"
+    - 15+ Days: "Overclocked Sentient AI 🤖"
+  * Empty States: Humorous artistic illustrations/doodles with copy like "No logs yet? Go touch grass... or start studying! 🌿"
+  * Action Buttons: Quirky copy like "Slap a Log 📝", "Send Encouragement 💥", "Claim Top Spot 🏆".
+
+----------------------------------------------------------------------
+2. TECH STACK & DEPENDENCIES
+----------------------------------------------------------------------
+- Framework: Next.js 14+ (App Router, Server Components, Client Actions, TypeScript)
+- Styling: Tailwind CSS, `clsx`, `tailwind-merge`
+- Animations: Framer Motion (smooth entry animations, sticky note slap effects, floating hover physics)
+- Icons: Lucide React (Push-pin, Flame, Brain, Trophy, StickyNote, Sparkles, Plus, Trash2, Heart, Laugh)
+- Database & Backend: Supabase (`@supabase/supabase-js`, `@supabase/ssr` for auth & server actions)
+- Data Visualization: Recharts (custom styled to fit the sticky-note color theme)
+
+----------------------------------------------------------------------
+3. DATABASE SCHEMA & SUPABASE SETUP (SQL)
+----------------------------------------------------------------------
+Generate a complete PostgreSQL script for Supabase with Row Level Security (RLS) enabled:
+
+```sql
+-- 1. Create Profiles Table
+CREATE TABLE public.profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  avatar_url TEXT DEFAULT '[https://api.dicebear.com/7.x/bottts/svg?seed=default](https://api.dicebear.com/7.x/bottts/svg?seed=default)',
+  meme_title TEXT DEFAULT 'Smooth Brain Era 🧠',
+  current_streak INT DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. Create Learning Logs Table
+CREATE TABLE public.learning_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  topic TEXT NOT NULL,
+  description TEXT,
+  minutes_spent INT NOT NULL CHECK (minutes_spent > 0),
+  sticky_color TEXT DEFAULT 'bg-yellow-100',
+  date_logged DATE DEFAULT CURRENT_DATE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 3. Create Sticker Reactions Table (For social interaction on logs)
+CREATE TABLE public.log_reactions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  log_id UUID REFERENCES public.learning_logs(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  reaction_type TEXT NOT NULL, -- e.g., '🔥', '🗿', '🧠', '💀', '👏'
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(log_id, user_id, reaction_type)
+);
+
+-- 4. RLS POLICIES
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.learning_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.log_reactions ENABLE ROW LEVEL SECURITY;
+
+-- Profiles: Public read, owner update
+CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Logs: Public read, owner insert/update/delete
+CREATE POLICY "Logs viewable by authenticated users" ON public.learning_logs FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can create logs" ON public.learning_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own logs" ON public.learning_logs FOR DELETE USING (auth.uid() = user_id);
+
+-- Reactions: Public read, authenticated create/delete
+CREATE POLICY "Reactions viewable by authenticated users" ON public.log_reactions FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Users can insert reactions" ON public.log_reactions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own reactions" ON public.log_reactions FOR DELETE USING (auth.uid() = user_id);
+
+-- 5. TRIGGER FOR NEW USER PROFILE CREATION
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$ BEGIN   INSERT INTO public.profiles (id, username, avatar_url)   VALUES (     new.id,     COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),     '[https://api.dicebear.com/7.x/bottts/svg?seed=](https://api.dicebear.com/7.x/bottts/svg?seed=)' \vert{}\vert{} new.id   );   RETURN NEW; END; $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

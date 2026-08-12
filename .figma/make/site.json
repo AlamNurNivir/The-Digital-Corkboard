@@ -1,0 +1,10 @@
+{
+  "description": "This interactive web app helps users track study sessions, connect with friends, and visualize progress through engaging sticky note-style logs and leaderboards.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

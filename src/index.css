@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-outfit: 'Outfit', sans-serif;
+  --font-caveat: 'Caveat', cursive;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-corkboard: #c8a97a;
+  --color-cork-dark: #a8834a;
+
+  --color-sticky-yellow: #fef9c3;
+  --color-sticky-mint: #d1fae5;
+  --color-sticky-lavender: #ede9fe;
+  --color-sticky-pink: #fce7f3;
+  --color-sticky-cyan: #e0f2fe;
+
+  --shadow-neo: 4px 4px 0px 0px rgba(15, 23, 42, 1);
+  --shadow-neo-lg: 6px 6px 0px 0px rgba(15, 23, 42, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-outfit);
+  background-color: #d4a96a;
+}
+
+.font-caveat {
+  font-family: var(--font-caveat);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Cork texture background */
+.corkboard {
+  background-color: #c8a97a;
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(180, 130, 70, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(160, 110, 50, 0.3) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23c8a97a'/%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23b8935a' opacity='0.5'/%3E%3Ccircle cx='3' cy='3' r='0.3' fill='%23a87e44' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+/* Dot grid for dashboard */
+.dot-grid {
+  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Neo shadow utilities */
+.shadow-neo {
+  box-shadow: 4px 4px 0px 0px rgba(15, 23, 42, 1);
+}
+
+.shadow-neo-lg {
+  box-shadow: 6px 6px 0px 0px rgba(15, 23, 42, 1);
+}
+
+.shadow-neo-hover {
+  box-shadow: 8px 8px 0px 0px rgba(15, 23, 42, 1);
+}
+
+/* Scrollbar hiding */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fire animation */
+@keyframes fire-flicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  25% { transform: scale(1.1) rotate(2deg); }
+  50% { transform: scale(0.95) rotate(-1deg); }
+  75% { transform: scale(1.05) rotate(1deg); }
+}
+
+.fire-animate {
+  display: inline-block;
+  animation: fire-flicker 0.8s ease-in-out infinite;
+}
+
+/* Pop animation for reactions */
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.pop-animate {
+  animation: pop 0.3s ease-out;
+}
+
+/* Tape strip for sticky notes */
+.tape-strip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 60px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  z-index: 10;
+}
+
+/* Push pin */
+.push-pin {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at 40% 35%, #ff6b6b, #c0392b);
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.3);
+  box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.push-pin::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 10px;
+  background: linear-gradient(to bottom, #888, #555);
+  border-radius: 0 0 2px 2px;
+}

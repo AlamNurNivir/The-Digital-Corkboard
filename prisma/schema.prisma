@@ -1,0 +1,152 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ================================
+// USER
+// ================================
+
+model User {
+  id            String   @id @db.VarChar(36)
+  username      String   @unique @db.VarChar(50)
+  avatarUrl     String   @map("avatar_url")
+  bio           String   @default("")
+  currentStreak Int      @default(0) @map("current_streak")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  password      Password?
+  learningLogs  LearningLog[]
+  reactions     LogReaction[]
+  fragments     Fragment[]
+  externalLinks ExternalLink[]
+
+  @@map("users")
+}
+
+
+// ================================
+// PASSWORD
+// ================================
+
+model Password {
+  userId       String   @id @map("user_id") @db.VarChar(36)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passwords")
+}
+
+
+// ================================
+// LEARNING LOG
+// ================================
+
+model LearningLog {
+  id               String   @id @db.VarChar(36)
+  userId           String   @map("user_id") @db.VarChar(36)
+
+  topic            String   @db.VarChar(200)
+  description      String   @default("")
+
+  minutesSpent     Int      @default(30) @map("minutes_spent")
+  minutesCompleted Int      @default(0) @map("minutes_completed")
+
+  stickyColor      String   @default("bg-yellow-100") @map("sticky_color")
+
+  dateLogged       DateTime @map("date_logged") @db.Date
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions     LogReaction[]
+  fragments     Fragment[]
+  externalLinks ExternalLink[]
+
+  @@index([userId])
+  @@index([dateLogged])
+  @@index([createdAt])
+
+  @@map("learning_logs")
+}
+
+
+// ================================
+// LOG REACTION
+// ================================
+
+model LogReaction {
+  id           String   @id @db.VarChar(36)
+  logId        String   @map("log_id") @db.VarChar(36)
+  userId       String   @map("user_id") @db.VarChar(36)
+
+  reactionType String   @map("reaction_type") @db.VarChar(10)
+
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  log  LearningLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([logId, userId, reactionType])
+
+  @@index([logId])
+  @@index([userId])
+
+  @@map("log_reactions")
+}
+
+
+// ================================
+// FRAGMENT
+// ================================
+
+model Fragment {
+  id        String   @id @db.VarChar(36)
+  logId     String   @map("log_id") @db.VarChar(36)
+  userId    String   @map("user_id") @db.VarChar(36)
+
+  message   String
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  log  LearningLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([logId])
+  @@index([userId])
+  @@index([createdAt])
+
+  @@map("fragments")
+}
+
+
+// ================================
+// EXTERNAL LINK
+// ================================
+
+model ExternalLink {
+  id        String   @id @db.VarChar(36)
+  logId     String   @map("log_id") @db.VarChar(36)
+  addedBy   String   @map("added_by") @db.VarChar(36)
+
+  url       String
+  title     String   @default("") @db.VarChar(300)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  log  LearningLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [addedBy], references: [id], onDelete: Cascade)
+
+  @@index([logId])
+  @@index([addedBy])
+
+  @@map("external_links")
+}
